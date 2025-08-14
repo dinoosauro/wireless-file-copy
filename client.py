@@ -181,6 +181,6 @@ for file in get_files_recursively(sys.argv[1]):
             break # Stop looking to the files
 
 # Delete the session token from the valid ones
-urllib.request.urlopen(urllib.request.Request(f"{sys.argv[1]}/logout/", method="GET", headers={
+urllib.request.urlopen(urllib.request.Request(f"{sys.argv[2]}/logout/", method="GET", headers={
     "Authorization": session_token
 }))
