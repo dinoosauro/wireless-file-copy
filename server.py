@@ -35,8 +35,6 @@ if (os.path.isfile(f"{os.getcwd()}{os.path.sep}wireless-file-copy.env")):
         available_lines = file.readlines()
         for [key, look, number] in [["authentication_key", "WIRELESS_FILE_COPY_KEY", False], ["server_address", "WIRELESS_FILE_COPY_ADDRESS", False], ["port", "WIRELESS_FILE_COPY_PORT", True]]: update_property(available_lines, key, look, number)
 
-print(server_settings)
-
 for i in range(2, len(sys.argv)):
     match(sys.argv[i]):
         case "--authentication-key":
@@ -72,7 +70,8 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(url_type.query)
             if self.headers.get("Authentication", "Bearer ")[7:] in stored_tokens:
                 if "url" in query:
-                    suggested_path = f"{sys.argv[1]}{os.path.sep}{query["url"][0]}"
+                    is_from_windows = query.get("systype", "nt")[0].lower() == "nt"
+                    suggested_path = f"{sys.argv[1]}{os.path.sep}{query["url"][0].replace("\\" if is_from_windows else "/", os.path.sep)}"
                     if os.path.isfile(suggested_path):
                         file_stat = os.stat(suggested_path)
                         self.send_response(200)
@@ -125,7 +124,8 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(url_type.query)
             if self.headers.get("Authentication", "Bearer ")[7:] in stored_tokens:
                 if "path" in query and "last_edit" in query and "overwrite" in query: # Three required URL parameters
-                    suggested_path = f"{sys.argv[1]}{os.path.sep}{query["path"][0]}"
+                    is_from_windows = query.get("systype", "nt")[0].lower() == "nt"
+                    suggested_path = f"{sys.argv[1]}{os.path.sep}{query["path"][0].replace("\\" if is_from_windows else "/", os.path.sep)}"
                     os.makedirs(os.path.dirname(suggested_path), exist_ok=True)
                     if (os.path.isfile(suggested_path) and query["overwrite"][0] != "1"): # The file exists, but the user doesn't want to overwrite it, let's return an error response
                         self.send_response(409)

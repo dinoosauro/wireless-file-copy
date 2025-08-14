@@ -75,13 +75,11 @@ if (os.path.isfile(f"{os.getcwd()}{os.path.sep}wireless-file-copy.env")):
         available_lines = file.readlines()
         for [key, look, number] in [["auth_token", "WIRELESS_FILE_COPY_KEY", 0], ["overwrite", "WIRELESS_FILE_COPY_OVERWRITE_SETTINGS", 1], ["allowed_extensions", "WIRELESS_FILE_COPY_ALLOWED_EXTENSIONS", 2]]: update_property(available_lines, key, look, number)
 
-print(script_settings)
-
 for i in range(2, len(sys.argv)): # Update the values reading the console arguments
     match(sys.argv[i]):
         case "--allowed-extensions":
             script_settings["allowed_extensions"] = sys.argv[i+1].split(",")
-        case "--duplicates":
+        case "--overwrite":
             j = int(sys.argv[i + 1])
             if (i > -1 and i < 4): script_settings["overwrite"] = j
         case "--authentication-key":
@@ -134,7 +132,7 @@ try: # Fetch token
     })
     with(urllib.request.urlopen(req)) as token_req:
         res_json = json.loads(token_req.read().decode("utf-8"))
-        session_token = f"{res_json["auth_type"]} {res_json["token"]}"
+        session_token = f"{res_json['auth_type']} {res_json['token']}"
 except:
     raise Exception("Failed to obtain server token. No operation can be done.")
         
@@ -150,7 +148,7 @@ for file in get_files_recursively(sys.argv[1]):
                 print(f"\033[34mUploading {full_file_path}\033[0m")
                 # We'll now check if the file already exists, by doing a GET request to the server. 
                 allow_overwrite = "1" if script_settings["overwrite"] == 2 else "0"
-                file_info = urllib.request.Request(f"{sys.argv[2]}/info/?url={urllib.parse.quote(file)}", method="GET", headers={
+                file_info = urllib.request.Request(f"{sys.argv[2]}/info/?url={urllib.parse.quote(file)}&systype={urllib.parse.quote(os.name)}", method="GET", headers={
                     "Authentication": session_token
                 })
                 file_info_res = urllib.request.urlopen(file_info)
@@ -169,7 +167,7 @@ for file in get_files_recursively(sys.argv[1]):
                             allow_overwrite = "1"
                         else: upload_this = False
                 # Let's now upload the file
-                req = urllib.request.Request(f"{sys.argv[2]}/upload/?path={urllib.parse.quote(file)}&last_edit={stat.st_mtime}&overwrite={allow_overwrite}", data=ProgressFile(file_read, format_value(file_size)), method="PUT", headers={
+                req = urllib.request.Request(f"{sys.argv[2]}/upload/?path={urllib.parse.quote(file)}&last_edit={stat.st_mtime}&overwrite={allow_overwrite}&systype={urllib.parse.quote(os.name)}", data=ProgressFile(file_read, format_value(file_size)), method="PUT", headers={
                     "Content-Length": str(stat.st_size),
                     "Authentication": session_token
                 })
